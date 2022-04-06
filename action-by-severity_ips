@@ -1,3 +1,10 @@
+# This example IPS sensor takes advantage of the different severity levels and applies corresponding actions.
+# Attackers who attempt Critical severity exploits will have their IP address banned for 1 day.
+# Attackers who attempt High severity exploits will have their IP address banned for 1 hour.
+# Attackers who attempt Medium severity exploits will have their exploit blocked, but will not have their IP address banned.
+# Attackers who attempt Low severity exploits will have the default FortiGuard action applied (sometimes block, sometimes pass).
+# Attackers who attempt Info severity exploits will only be monitored.
+
 config ips sensor
     edit "action-by-severity_ips"
         set comment "This IPS sensor is an example of correlating severity levels to different action levels. "
