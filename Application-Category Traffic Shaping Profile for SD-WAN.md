@@ -74,9 +74,6 @@ config firewall traffic-class
     edit 20
         set class-name "web.client_classid"
     next
-    edit 21
-        set class-name "vpn_classid"
-    next
 end
 
 config firewall shaping-profile
