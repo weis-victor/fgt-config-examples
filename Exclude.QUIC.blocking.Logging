@@ -2,8 +2,9 @@ Exclude QUIC blocking from Logging
 
 Use-Case: You often need to block QUIC in your Application Control profiles to force clients to revert to TCP/HTTP2.
 This is necessary for many of the FortiGate's NGFW profiles to be able to properly process the traffic, since it can't parse QUIC (at least before FOS 7.2)
-Unfortunately, there is no way in the Application Control profile itself to block without logging each and every block, which creates a ton of log bloat.
+Unfortunately, there is no way in the Application Control profile itself to block QUIC without logging each and every block, which creates a ton of log bloat.
 However, there is a way to trim out all these QUIC blocked logs, using log filters. We just need to exlude on AppID == 40169
+Doing this will greatly reduce log utilization and reduce the noise in your logs.
 
 config log fortianalyzer filter
     config free-style
@@ -15,7 +16,7 @@ config log fortianalyzer filter
     end
 end
 
-If you also want to exclude them form local memory to save space there as well, you can do the following:
+If you also want to exclude QUIC blocked logs form local memory to save space there as well, you can do the following:
 
 config log memory filter
     config free-style
