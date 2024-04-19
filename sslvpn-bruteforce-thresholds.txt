@@ -12,6 +12,9 @@ There are 86,400 seconds in a day. If we’re only banning for 60 seconds at a t
 Let’s suppose the attacker has a small botnet of 1,000 bots all with unique public IP addresses. Now the attacker can increase the password-guess rate by 1000x, roughly 83,613,000 attempts per month. Of course, ideally your IAM source should also be locking out the user account itself after a certain number of failed login attempts as well, but I’m just looking at the firewall side of things. And on the firewall side of things, if the attacker suspects the user account has been locked out (perhaps they have a list of user accounts they are working off of, from a public data breach), they’ll often not just be brute-forcing a single user account, but instead password spaying lots of different accounts. So blocking the offending source IPs is still important.
 
 Therefore, I always recommend my customer change these default settings to ban after a much higher threshold of failed login attempts, and for a much longer duration. I usually like to say “after 10 failed login attempts, block for 1 day.” My reasoning for this is: it’s almost impossible that the user fat-fingers their password 10 times in a row, so false positives are not very likely. If on the off-chance it was a false positive, the user can still open a ticket with support to get unbanned. So then if 11 failed logins in a row gives a high confidence that it’s a true brute-force attack, than we should ban that IP for as long a time as possible, and the current maximum that FortiOS allows is 86,400 (1 day), to cause as much hinderance to the attacker as possible. 10 attempts every 1 days means they can only try about 300 attempts per month, which is WAY better than the 83,613 passwords per month if we just leave the default values in place. It’s so much better that most attackers are likely to just cross you off their list of targets and on move on to someone else.
-1m
 
+config vpn ssl settings
+    set login-attempt-limit 10
+    set login-block-time 86400
+end
 
