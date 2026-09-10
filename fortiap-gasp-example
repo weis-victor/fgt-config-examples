@@ -1,0 +1,153 @@
+# gasp is generally accepted security practice
+
+# create schedules for when you want darrp to run
+config firewall schedule recurring
+    edit "non-working-hours_sched"
+        set start 17:00
+        set end 08:00
+        set day sunday monday tuesday wednesday thursday friday saturday
+    next
+    edit "lunch_sched"
+        set start 12:00
+        set end 13:00
+        set day sunday monday tuesday wednesday thursday friday saturday
+    next
+end
+
+# set darrp to run every hour within these schedules
+config wireless-controller setting
+    set darrp-optimize 3600
+    set darrp-optimize-schedules "non-working-hours_sched" "lunch_sched"
+end
+
+# create the arrp profile
+config wireless-controller arrp-profile
+    edit "gasp_arrp"
+        set comment "Eliminate all channels from phase1 algorithm and rely only on phase2 weighting defaults"
+        set selection-period 600
+        set threshold-ap 1
+        set threshold-noise-floor "-95"
+        set threshold-channel-load 1
+        set threshold-spectral-rssi "-95"
+        set threshold-tx-retries 150
+        set threshold-rx-errors 15
+    next
+end
+
+# create a wids profile to actually do something
+config wireless-controller wids-profile
+    edit "gasp_wids"
+        set sensor-mode both
+        set ap-scan enable
+        set ap-bgscan-intv 1
+        set ap-bgscan-duration 20
+        set ap-bgscan-idle 0
+        set ap-scan-passive enable
+        set wireless-bridge enable
+        set deauth-broadcast enable
+        set null-ssid-probe-resp enable
+        set long-duration-attack enable
+        set invalid-mac-oui enable
+        set weak-wep-iv enable
+        set auth-frame-flood enable
+        set assoc-frame-flood enable
+        set spoofed-deauth enable
+        set asleap-attack enable
+        set eapol-start-flood enable
+        set eapol-logoff-flood enable
+        set eapol-succ-flood enable
+        set eapol-fail-flood enable
+        set eapol-pre-succ-flood enable
+        set eapol-pre-fail-flood enable
+    next
+end
+
+# create a qos-profile for 802.11e wmm
+config wireless-controller qos-profile
+    edit "wmm_qosp"
+        set comment "802.11e defaults"
+        set dscp-wmm-mapping enable
+        set dscp-wmm-vo 48 56
+        set dscp-wmm-vi 32 40
+        set dscp-wmm-be 0 24
+        set dscp-wmm-bk 8 16
+        set wmm-dscp-marking enable
+    next
+end
+          
+# apply wids and gasp_darp to ap profiles
+config wireless-controller wtp-profile
+    edit "<profile-name>"
+        config platform
+            set type <fortiAP-model>
+            set ddscan enable # if we have a dedicated scanning radio
+        end
+        set led-state disable # i dont like blinky lights
+        set allowaccess https ssh # if capwap goes down i need access to tshoot
+        set login-passwd-change yes # dont use default password
+        set login-passwd <password> # set a password
+        set console-login enable # ensure we can always get in via console
+        set lldp enable # ensure lldp is enabled
+        set frequency-handoff disable # i never had great luck with these in prod 
+        set ap-handoff disable # i never had great luck with these in prod 
+        config radio-1
+            set auto-power-level enable
+            set band 802.11n-2G 802.11ax-2G # disable 802.11 methods older than n 
+            set channel-bonding 20MHz # always use 20MHz wide channels on 2GHz radio
+            set darrp enable
+            set arrp-profile gasp_arrp
+            set vap-all bridge # i usually use bridge-mode ssids
+            set powersave-optimize no-11b-rate # specifically disable 802.11b on 2.4 GHz radio
+        end
+        config radio-2
+            set auto-power-level enable
+            set band 802.11n-5G 802.11ac-5G 802.11ax-5G # disable 802.11 methods older than n
+            set channel-bonding 40MHz # I usually use 40MHz wide channels on 5GHz radio
+            set darrp enable
+            set arrp-profile gasp_arrp
+            set vap-all bridge # i usually use bridge-mode ssids
+        end
+        config radio-3
+            set auto-power-level enable
+            set band 802.11ax-6G 802.11be-6G # nothing older than .11ax on 6 GHz band
+            set channel-bonding 80MHz # I usually use 80MHz wide channels on 5GHz radio
+            set darrp enable
+            set arrp-profile gasp_arrp
+            set vap-all bridge # i usually use bridge-mode ssids
+        end
+        config radio-4
+            set mode monitor
+            set wids-profile gasp_wids
+        end
+    next
+end
+
+# gasp settings per ssid
+config wireless-controller vap
+    edit "ssid<N>"
+        set ssid "<ssid-name>"
+        set security wpa2-only-enterprise # or whatever other auth method is appropriate
+        set pmf optional # use optional for backwards compatability in most envrionments; if you need to enforce, may need seperate ssid for iot devices
+        set mbo enable
+        set fast-bss-transition enable # enable 802.11r
+        set ft-over-ds enable
+        set 80211k enable
+        set 80211v enable
+        set intra-vap-privacy enable # clients dont need to talk to each other in my wlan
+        set schedule "always"
+        set vlanid <vlanid>
+        set dynamic-vlan enable
+        set multicast-enhance enable
+        set me-disable-thresh 128
+        set igmp-snooping enable
+        set probe-resp-suppression enable
+        set probe-resp-threshold "-78"
+        set qos-profile wmm_qosp # Enable 802.11e
+        # Disable lower data rates
+        set rates-11a 24-basic 36 48 54 
+        set rates-11bg 12-basic 24 36 48 54
+        set rates-11n-ss12 mcs2/1 mcs3/1 mcs4/1 mcs5/1 mcs6/1 mcs7/1 mcs8/2 mcs9/2 mcs10/2 mcs11/2 mcs12/2 mcs13/2 mcs14/2 mcs15/2
+        set rates-11n-ss34 mcs17/3 mcs18/3 mcs19/3 mcs20/3 mcs21/3 mcs22/3 mcs23/3 mcs24/4 mcs25/4 mcs26/4 mcs27/4 mcs28/4 mcs29/4 mcs30/4 mcs31/4
+        set sticky-client-remove enable
+    next 
+end
